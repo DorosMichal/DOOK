@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from config import strip_str
+strip_str = '[]"' #used to strip matched group, potentially there could be other brackets etc.
 
 def proper_units(size):
     if size >= 10**9:
@@ -30,7 +30,7 @@ class Statistic(ABC):
 class RequestsNumber(Statistic):
     requirements = []
 
-    def __init__(self, from, to):
+    def __init__(self, from_date, to_date):
         self.ctr = 0
         
     def update_stats(self, matchobj):
@@ -53,7 +53,7 @@ class RequestsPerSec(Statistic):
     def update_stats(self, matchobj):
         self.ctr += 1
 
-    def give_answer(self):
+    def give_answer(self): ##bledy dzielenia do obsluzenia
         return self.ctr/self.no_of_seconds
         
     def __repr__(self):
