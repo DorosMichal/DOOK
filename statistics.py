@@ -13,6 +13,11 @@ def proper_units(size):
 
 class Statistic(ABC):
     requirements = []
+
+    @abstractmethod
+    def __repr__(self):
+        pass
+
     @abstractmethod
     def update_stats(self, matchobj):
         pass
@@ -21,13 +26,10 @@ class Statistic(ABC):
     def give_answer(self):
         pass
 
-    @abstractmethod
-    def __repr__(self):
-        pass
-
 
 class RequestsNumber(Statistic):
     requirements = []
+
     def __init__(self, from, to):
         self.ctr = 0
         
@@ -43,6 +45,7 @@ class RequestsNumber(Statistic):
 
 class RequestsPerSec(Statistic):
     requirements = []
+
     def __init__(self, from_date, to_date):
         self.no_of_seconds = (to_date-from_date).seconds
         self.ctr = 0
@@ -62,7 +65,7 @@ class Responses(Statistic):
         self.resp = dict()
         
     def update_stats(self, matchobj):
-        code = int(matchobj.group('s').strip(strip_str))
+        code = int(matchobj['s'].strip(strip_str))
         self.resp[code] = self.resp[code] + 1 if code in self.resp else 0
 
     def give_answer(self):
@@ -78,9 +81,9 @@ class AvgSizeOf2xx(Statistic):
         self.length_sum = 0
         
     def update_stats(self, matchobj):
-        code = matchobj.group('s').strip(strip_str)
+        code = matchobj['s'].strip(strip_str)
         if code[0] == '2':
-            length = matchobj.group('b').strip(strip_str)
+            length = matchobj['b'].strip(strip_str)
             if length != '-':
                 self.ctr += 1
                 self.length_sum += int(length)
