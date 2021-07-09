@@ -9,10 +9,10 @@ python parse.py -h
 ### zamysł rozwiązania
 1) podany format logów jest konwertowany na wyrazenie regularne
 2) obliczane są poprawne daty startu i zakończenia
-3) Przechodząc po linijkach pliku:
-    matchujemy linijke do wzorca
-    sprawdzamy czy data jest w interesującym nas zakresie
-    aktualizujemy statystyki przkazując obiekt matchu do metody "update_stat"
+3) Przechodząc po linijkach pliku:<br/>
+    matchujemy linijke do wzorca<br/>
+    sprawdzamy czy data jest w interesującym nas zakresie<br/>
+    aktualizujemy statystyki przkazując obiekt matchu do metody "update_stat"<br/>
 
 Statystyki tworzone są w formie klas dziedziczących po abstrakcyjnej klasie Statistic (w pliku statistics_classes.py),
 kazda statystyka ma swoje wymagane pola (pola z logów z których będzie korzystać, jeśli ich nie ma pojawia się stosowny komunikat, a statystyka nie jest liczona), dodatkowo posiada metodę __repr__, give_answer oraz update_stat <br/>
