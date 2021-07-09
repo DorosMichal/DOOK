@@ -21,7 +21,7 @@ give_answer zwraca odpowiedź danej statystyki <br/>
 __repr__ wyświetla odpowiedź w odpowiedni sposób </br>
 
 ### modyfikacje i analiza
-Przyjęte podejście pozwala bardzo łatwo modyfikować program:
+Przyjęte podejście pozwala bardzo łatwo modyfikować program:<br/>
 Lista statystyk obliczanych w trakcie działania znajduje się w pliku config.py, aby dodać nową statystykę wystarczy stworzyć dla niej klasę i dodać ją do listy <br/>
 Podobnie format logów znajduje się w pliku config.py i mozna go łatwo zmienić w razie potrzeby, bo wyrazenie mu odpowiadajace się dostosuje <br/>
 Aby zmienic kolejność czy sposób wyświetlania statystyk wystarczy zmienić ich kolejność na liście oraz zmodyfikować metody __repr__ <br/>
