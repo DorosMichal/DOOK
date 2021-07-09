@@ -46,11 +46,11 @@ class RequestsNumber(Statistic):
 
 
 class RequestsPerSec(Statistic):
-    requirements = []
+    requirements = ['t']
 
     def __init__(self, from_date, to_date):
         print(from_date, to_date)
-        self.no_of_seconds = (to_date-from_date).seconds
+        self.no_of_seconds = (to_date-from_date).total_seconds()
         self.ctr = 0
         
     def update_stats(self, matchobj):

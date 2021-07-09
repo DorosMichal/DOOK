@@ -2,6 +2,7 @@ import re
 from datetime import datetime
 
 def format_str_to_re(format_str : str):
+    
     format_str = format_str.replace(r'"', '')
     def to_named_group(matchobj):
         return f"(?P<{matchobj[1]}>(\[.+?\])|(\".+?\")|\S+)"
@@ -24,7 +25,7 @@ def requirements_satisfied(stat, format_str : str):
 
 def get_date_from_match(matchobj : re.Match):
     """takes match-object, if it contains date it converts it to datetime object"""
-    date_format_str = "[%d/%b/%Y:%H:%M:%S" ##without timezone
+    date_format_str = "[%d/%b/%Y:%H:%M:%S" ## without timezone
     try:
         date_str = matchobj['t'][:-7]
     except IndexError:
@@ -32,28 +33,46 @@ def get_date_from_match(matchobj : re.Match):
         exit(1)
     return datetime.strptime(date_str, date_format_str)
 
-def get_date_from_header(header : str, start : bool):
-    """takes journalctl header, if start = True, returns starting date, else ending"""
-    date_format_str = "%Y-%m-%d %H:%M:%S"
-    date_str = ("begin" if start else "end") + r" at \w{3} (\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} 
-    match = re.search(date_str, header)
-    return datetime.strptime(match[1], date_format_str)
+def get_date_from_file(file, start : bool, pattern : re.Pattern):
+    if start: #first(oldest) log is at the end of file
+        for line in file:
+            pass
+    else:
+        line = next(file)
+        
+    line.strip()
+    match = pattern.match(line)
+    if match is None:
+        print("couldn't match log format")
+        exit(1)
+    
+    file.seek(0) #get file back to the correct possition
+    next(file)
+    return get_date_from_match(match)
 
-def parse_dates(from_date : str, to_date : str, header : str):
-    """takes from and to date as strings and log file header,
-    returns datetime objects - first and last date,
-    and all - boolean informing if all logs in file are considered"""
+def parse_date(date : str, start : bool, file, pattern : re.Pattern):
+    """takes date as string, bool informing that its --from date when true, --to date otherwise,
+    file and line pattern
+    returns datetime objects - when start is True either converted date or date of first log, whichever comes later
+    analogously when start is False either converted date or date of last log, whichever comes first.
+    """
     date_str = '%d-%m-%Y_%H-%M-%S'
-    all = from_date is None and to_date is None
-    from_date = datetime.strptime(from_date, date_str) if from_date is not None else get_date_from_header(header, 1)
-    to_date = datetime.strptime(to_date, date_str) if to_date is not None else get_date_from_header(header, 0)
-    return from_date, to_date, all
+    file_date = get_date_from_file(file, start, pattern)
+    try:
+        date = datetime.strptime(date, date_str) if date is not None else file_date
+    except ValueError:
+        print(f"{'--from' if start else '--to'} date provided does not match requested format: {date_str}")
+        exit(1)
+    return max(date, file_date) if start else min(date, file_date)
 
 
 def main(logfile, from_date, to_date, format_str, statistics_class_list):
     pattern = prepare_pattern(format_str)
     with open(logfile, 'r') as file:
-        from_date, to_date, all = parse_dates(from_date, to_date, next(file))
+        next(file) #skip header
+        all = from_date is None and to_date is None
+        from_date = parse_date(from_date, True, file, pattern)
+        to_date = parse_date(to_date, False, file, pattern)
         statistics_list = [stat(from_date, to_date) for stat in statistics_class_list if requirements_satisfied(stat, format_str)]
         for i, line in enumerate(file):
             line = line.strip()
@@ -63,9 +82,9 @@ def main(logfile, from_date, to_date, format_str, statistics_class_list):
                 continue
             if not all:
                 date = get_date_from_match(match)
-                if date < from_date:
-                    continue
                 if date > to_date:
+                    continue
+                if date < from_date:
                     break
             for stat in statistics_list:
                 stat.update_stats(match)
