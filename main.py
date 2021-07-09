@@ -24,18 +24,18 @@ def requirements_satisfied(stat, format_str : str):
 
 def get_date_from_match(matchobj : re.Match):
     """takes match-object, if it contains date it converts it to datetime object"""
-    date_format_str = "[%d/%b/%Y:%H:%M:%S %z]"
+    date_format_str = "[%d/%b/%Y:%H:%M:%S" ##without timezone
     try:
-        date_str = matchobj['t']
+        date_str = matchobj['t'][:-7]
     except IndexError:
-        print("couldn't find date in logs, while --from or --to arguments provided, add date to logs (%(t)s) or print statistics for all logs")
+        print("couldn't find date in logs, while --from or --to arguments provided, add date to logs ( \%(t)s ) or print statistics for all logs")
         exit(1)
     return datetime.strptime(date_str, date_format_str)
 
 def get_date_from_header(header : str, start : bool):
     """takes journalctl header, if start = True, returns starting date, else ending"""
-    date_format_str = "%Y-%m-%d %H:%M:%S %Z"
-    date_str = ("begin" if start else "end") + r" at \w{3} (\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} [A-Z]{3,4})" 
+    date_format_str = "%Y-%m-%d %H:%M:%S"
+    date_str = ("begin" if start else "end") + r" at \w{3} (\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} 
     match = re.search(date_str, header)
     return datetime.strptime(match[1], date_format_str)
 
@@ -63,7 +63,6 @@ def main(logfile, from_date, to_date, format_str, statistics_class_list):
                 continue
             if not all:
                 date = get_date_from_match(match)
-                print(date.tzinfo, from_date.tzinfo, to_date.tzinfo)
                 if date < from_date:
                     continue
                 if date > to_date:
