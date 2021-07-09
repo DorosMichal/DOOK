@@ -2,14 +2,28 @@ import re
 from datetime import datetime
 
 def format_str_to_re(format_str : str):
-    
-    format_str = format_str.replace(r'"', '')
+    """convert format string to regular expression with properly named groups"""
+    def eliminate_quotes(matchobj):
+        return matchobj[1]
+
     def to_named_group(matchobj):
+        """group should match 3 scenarios
+            1) [anything]
+            2) "anything"
+            3) one word (any characters but without white spaces)
+            """
         return f"(?P<{matchobj[1]}>(\[.+?\])|(\".+?\")|\S+)"
-    valid_letters = '[hlutrmUqHsBbfaTMDLp]'
+
+    # get rid of quotes in format_str, to not match them twice
+    # finds all quoted formats "{variable_name}one_letter" where {variable_name} is optional
+    quotes_pattern = r'\"(%\(({.+?})?\w\)s)\"'
+    format_str = re.sub(quotes_pattern, eliminate_quotes, format_str)
+    
+    valid_letters = "[hlutrmUqHsBbfaTMDLp]"
     variables = "{[a-z\-]+}[ioe]"
     pattern = re.compile(rf'%\(({valid_letters}|{variables})\)s')
-    return pattern.sub(to_named_group, format_str).replace(r'"', r'\"')
+    #replace access_log_format with corresponding regex and escape quotes (to match them directly)
+    return pattern.sub(to_named_group, format_str).replace('"', r'\"')
 
 def prepare_pattern(format_str : str):
     journal_pattern_str = r'\w{3} \d{2} \d{2}:\d{2}:\d{2} \S+ \S+: '
@@ -29,18 +43,22 @@ def get_date_from_match(matchobj : re.Match):
     try:
         date_str = matchobj['t'][:-7]
     except IndexError:
-        print("couldn't find date in logs, while --from or --to arguments provided, add date to logs ( \%(t)s ) or print statistics for all logs")
+        print(r"couldn't find date in logs, while --from or --to arguments provided, add date to logs ( \%(t)s ) or print statistics for all logs")
         exit(1)
     return datetime.strptime(date_str, date_format_str)
 
 def get_date_from_file(file, start : bool, pattern : re.Pattern):
+    line = ''
     if start: #first(oldest) log is at the end of file
         for line in file:
             pass
     else:
         line = next(file)
-        
+ 
     line.strip()
+    if line == '':
+        print("file contains no logs")
+        exit(1)
     match = pattern.match(line)
     if match is None:
         print("couldn't match log format")

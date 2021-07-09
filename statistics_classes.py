@@ -49,7 +49,6 @@ class RequestsPerSec(Statistic):
     requirements = ['t']
 
     def __init__(self, from_date, to_date):
-        print(from_date, to_date)
         self.no_of_seconds = (to_date-from_date).total_seconds()
         self.ctr = 0
         
@@ -60,11 +59,12 @@ class RequestsPerSec(Statistic):
         try:
             return self.ctr/self.no_of_seconds
         except ZeroDivisionError:
-            print("Date of start and end must be different")
+            print("Date of start and end must be different to calculate RequestsPerSec")
             return None
         
     def __repr__(self):
-        return f"requests/sec: {self.give_answer():.2f}"
+        answer = self.give_answer()
+        return "requests/sec: " + (f"{answer:.2f}" if answer else '---')
 
 class Responses(Statistic):
     requirements = ['s']
@@ -100,7 +100,7 @@ class AvgSizeOf2xx(Statistic):
             return self.length_sum / self.ctr
         except ZeroDivisionError:
             print("No 2xx response code found")
-            return None
+            return 0
         
     def __repr__(self):
         answer = proper_units(self.give_answer())
