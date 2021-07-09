@@ -3,7 +3,7 @@
 ### uruchomienie
 python parse.py --from 20-11-2020_10-20-30 --to 21-12-2020_10-20-30 gunicorn.log2
 
-uruchomienie z flagą -h podaje szczegóły opcji
+uruchomienie z flagą -h podaje szczegóły opcji <br/>
 python parse.py -h
 
 ### zamysł rozwiązania
