@@ -1,6 +1,7 @@
 import argparse
-from config import statistics_class_list, format_str
 from main import main
+from config import format_str, statistics_class_list
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument("logfile", help="name of the file with logs", type=str)

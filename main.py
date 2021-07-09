@@ -29,7 +29,12 @@ def prepare_pattern(format_str : str):
     journal_pattern_str = r'\w{3} \d{2} \d{2}:\d{2}:\d{2} \S+ \S+: '
     pattern_str = format_str_to_re(format_str)
     return re.compile(journal_pattern_str + pattern_str)
-  
+
+def prepare_pattern_fast():
+    pat = r'\w{3} \d{2} \d{2}:\d{2}:\d{2} \S+ \S+: [\d\.]{7,15} \- \S+ (?P<t>\[\S{20} \S{5}]) \".+?\" (?P<s>\d{3}) (?P<b>\d+) \".+?\" \"\S+?\" (?P<D>\d+)'
+    return re.compile(pat)
+
+
 def requirements_satisfied(stat, format_str : str):
     for req in stat.requirements:
         if f'%({req})s' not in format_str:
@@ -68,7 +73,7 @@ def get_date_from_file(file, start : bool, pattern : re.Pattern):
     next(file)
     return get_date_from_match(match)
 
-def parse_date(date : str, start : bool, file, pattern : re.Pattern):
+def get_correct_date(date : str, start : bool, file, pattern : re.Pattern):
     """takes date as string, bool informing that its --from date when true, --to date otherwise,
     file and line pattern
     returns datetime objects - when start is True either converted date or date of first log, whichever comes later
@@ -83,29 +88,32 @@ def parse_date(date : str, start : bool, file, pattern : re.Pattern):
         exit(1)
     return max(date, file_date) if start else min(date, file_date)
 
-
 def main(logfile, from_date, to_date, format_str, statistics_class_list):
     pattern = prepare_pattern(format_str)
-    with open(logfile, 'r') as file:
-        next(file) #skip header
-        all = from_date is None and to_date is None
-        from_date = parse_date(from_date, True, file, pattern)
-        to_date = parse_date(to_date, False, file, pattern)
-        statistics_list = [stat(from_date, to_date) for stat in statistics_class_list if requirements_satisfied(stat, format_str)]
-        for i, line in enumerate(file):
-            line = line.strip()
-            match = pattern.match(line)
-            if match is None:
-                print(f"couldn't match log format in line {i}")
-                continue
-            if not all:
-                date = get_date_from_match(match)
-                if date > to_date:
+    try:
+        with open(logfile, 'r') as file:
+            next(file) #skip header
+            all = from_date is None and to_date is None
+            from_date = get_correct_date(from_date, True, file, pattern)
+            to_date = get_correct_date(to_date, False, file, pattern)
+            statistics_list = [stat(from_date, to_date) for stat in statistics_class_list if requirements_satisfied(stat, format_str)]
+            for i, line in enumerate(file):
+                line = line.strip()
+                match = pattern.match(line)
+                if match is None:
+                    print(f"couldn't match log format in line {i}")
                     continue
-                if date < from_date:
-                    break
-            for stat in statistics_list:
-                stat.update_stats(match)
+                if not all:
+                    date = get_date_from_match(match)
+                    if date > to_date:
+                        continue
+                    if date < from_date:
+                        break
+                for stat in statistics_list:
+                    stat.update_stats(match)
+    except FileNotFoundError:
+        print("no such file or directory")
+        exit(1)
     for stat in statistics_list:
         print(stat)
 

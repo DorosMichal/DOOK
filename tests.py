@@ -70,25 +70,25 @@ def test_date_from_file(pattern):
         assert date == datetime(2019,12,1,11,6,5)
 
 @pytest.mark.date
-def test_parse_date_from_file_wins(pattern):
+def test_correct_date__from_file_wins(pattern):
     from_date_str = "01-12-2019_10-03-50"
     to_date_str = "01-12-2019_13-03-50"
     with open('test.txt') as file:
         next(file)
-        date = main.parse_date(from_date_str, 1, file, pattern)
+        date = main.get_correct_date(from_date_str, 1, file, pattern)
         assert date == datetime(2019,12,1,11,6,4)
-        date = main.parse_date(to_date_str, 0, file, pattern)
+        date = main.get_correct_date(to_date_str, 0, file, pattern)
         assert date == datetime(2019,12,1,11,6,5)
 
 @pytest.mark.date
-def test_parse_date_from_user_wins(pattern):
+def test_correct_date__from_user_wins(pattern):
     from_date_str = "01-12-2019_11-06-05"
     to_date_str = "01-12-2019_11-06-04"
     with open('test.txt') as file:
         next(file)
-        date = main.parse_date(from_date_str, 1, file, pattern)
+        date = main.get_correct_date(from_date_str, 1, file, pattern)
         assert date == datetime(2019,12,1,11,6,5)
-        date = main.parse_date(to_date_str, 0, file, pattern)
+        date = main.get_correct_date(to_date_str, 0, file, pattern)
         assert date == datetime(2019,12,1,11,6,4)
 
 @pytest.mark.stats

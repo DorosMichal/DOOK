@@ -1,5 +1,4 @@
 from statistics_classes import RequestsNumber, RequestsPerSec, Responses, AvgSizeOf2xx
-
 statistics_class_list = [RequestsNumber, RequestsPerSec, Responses, AvgSizeOf2xx]
 format_str = '%(h)s %(l)s %(u)s %(t)s "%(r)s" %(s)s %(b)s "%(f)s" "%(a)s" %(D)s'
 
