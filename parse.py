@@ -1,5 +1,6 @@
 import argparse
-from main import main
+from faster_main import main
+#from main import main
 from config import format_str, statistics_class_list
 
 

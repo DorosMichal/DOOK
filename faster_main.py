@@ -30,12 +30,6 @@ def prepare_pattern(format_str : str):
     pattern_str = format_str_to_re(format_str)
     return re.compile(journal_pattern_str + pattern_str)
 
-def prepare_pattern_fast():
-    ###test function
-    pat = r'\w{3} \d{2} \d{2}:\d{2}:\d{2} \S+ \S+: [\d\.]{7,15} \- \S+\
-         (?P<t>\[\S{20} \S{5}]) \".+?\" (?P<s>\d{3}) (?P<b>\d+) \".+?\" \"\S+?\" (?P<D>\d+)'
-    return re.compile(pat)
-
 def requirements_satisfied(stat, format_str : str):
     for req in stat.requirements:
         if f'%({req})s' not in format_str:
@@ -55,20 +49,14 @@ def get_date_from_match(matchobj : re.Match):
         exit(1)
     return datetime.strptime(date_str, date_format_str)
 
-def get_date_from_file(file, start : bool, pattern : re.Pattern):
-    """assumes file starts with header"""
+def get_date_from_file(file, start : bool, pattern : re.Pattern, offsets):
+    """assumes file starts with header and offsets has at least 3 elements"""
     next(file)
-    line = ''
     if start: #first(oldest) log is at the end of file
-        for line in file:
-            pass
-    else:
-        line = next(file)
- 
+        file.seek(offsets[-2])
+    line = next(file)
     line.strip()
-    if line == '':
-        print("file contains no logs")
-        exit(1)
+        
     match = pattern.match(line)
     if match is None:
         print("couldn't match log format")
@@ -77,14 +65,14 @@ def get_date_from_file(file, start : bool, pattern : re.Pattern):
     file.seek(0) #get file back to the correct possition
     return get_date_from_match(match)
 
-def get_correct_date(date : str, start : bool, file, pattern : re.Pattern):
+def get_correct_date(date : str, start : bool, file, pattern : re.Pattern, offsets):
     """takes date as string, bool informing that its --from date when true, --to date otherwise,
     file and line pattern
     returns datetime objects - when start is True either converted date or date of first log, whichever comes later
     analogously when start is False either converted date or date of last log, whichever comes first.
     """
     date_str = '%d-%m-%Y_%H-%M-%S'
-    file_date = get_date_from_file(file, start, pattern)
+    file_date = get_date_from_file(file, start, pattern, offsets)
     try:
         date = datetime.strptime(date, date_str) if date is not None else file_date
     except ValueError:
@@ -104,6 +92,9 @@ def fill_offsets(file):
     for line in file:
         offset += len(line)
         t.append(offset)
+    if len(t) < 3:
+        print("file contains no logs")
+        exit(1)
     file.seek(0)
     return t
 
@@ -131,15 +122,15 @@ def FirstNotSmaller(first_date, offsets, file, pattern):
 def main(logfile, from_date, to_date, format_str, statistics_class_list):
     pattern = prepare_pattern(format_str)
     try:
-        with open(logfile, 'r') as file:            
-            from_date = get_correct_date(from_date, True, file, pattern)
-            to_date = get_correct_date(to_date, False, file, pattern)
+        with open(logfile, 'r') as file:  
+            offsets = fill_offsets(file)         
+            from_date = get_correct_date(from_date, True, file, pattern, offsets)
+            to_date = get_correct_date(to_date, False, file, pattern, offsets)
 
             statistics_list = [stat(from_date, to_date) for stat in statistics_class_list
                             if requirements_satisfied(stat, format_str)]
             
             ### REMEMBER THAT DATES IN FILE ARE FROM MOST RECENT TO OLDEST
-            offsets = fill_offsets(file)
             stop_idx = FirstNotSmaller(from_date, offsets, file, pattern)
             start_idx = LastNotGreater(to_date, offsets, file, pattern)
             file.seek(offsets[start_idx])
